@@ -2,15 +2,15 @@ package printer
 
 type Manager interface {
 
-	Add()
+	Add(name *string, device *string)
 
-	List() List
+	List(added *bool) *List
 
 	Print()
 
-	Job()
+	Job(printer *string, jobId *string) *JobInfo
 
-	JobList()
+	JobList(printer *string, status *string) *JobInfoList
 }
 
 type List struct {
@@ -20,5 +20,20 @@ type List struct {
 type Printer struct {
 	name string
 	status string
+	device string
+	connected bool
+	supported bool
+}
+
+type JobInfoList struct {
+	jobs []JobInfo
+}
+
+type JobInfo struct {
+	id string
+	startTime string
+	status string
+	description string
+	fileSize int64
 }
 
