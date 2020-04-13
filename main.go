@@ -1,6 +1,7 @@
 package main
 
 import (
+	"./service/printer"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -21,6 +22,11 @@ func ServeHttp(w http.ResponseWriter, r *http.Request) {
 
 func startServer() {
 	http.HandleFunc("/", ServeHttp)
+	http.HandleFunc("/printer/add", service_printer.AddPrinter)
+	http.HandleFunc("/printer/list", service_printer.ListPrinter)
+	http.HandleFunc("/printer/print", service_printer.Print)
+	http.HandleFunc("/printer/job", service_printer.Job)
+	http.HandleFunc("/printer/job/list", service_printer.JobList)
 	http.ListenAndServe(":8888", nil)
 }
 
