@@ -18,16 +18,19 @@ func (cupsManager CupsManager) Add(name *string, device *string) {
 	usbPrinter := getUsbPrinter()
 
 	if device == nil || name == nil || usbPrinter == nil {
+		// TODO 异常：缺少参数
 		return
 	}
 
 	if *device != *usbPrinter {
+		// TODO 异常：要添加的打印机未连接
 		return
 	}
 
 	driver := getPrinterDriver(device)
 
 	if driver == nil {
+		// TODO 异常：要添加的打印机未被支持
 		return
 	}
 
@@ -48,31 +51,27 @@ func (cupsManager CupsManager) List(added bool) *List {
 
 func (cupsManager CupsManager) Print(printInfo *PrintInfo) *PrintResult {
 
-
-
 	// 生成文件名称（时间戳）
-	time := time.Now().UnixNano()
-	fileName := strconv.FormatInt(time,10) + ".pdf"
+	timestamp := time.Now().UnixNano()
+	fileName := strconv.FormatInt(timestamp,10) + ".pdf"
 	fmt.Println(fileName)
-
-	//url := "http://pan.hehuapei.com/temp/4-7.pdf"
-	//printer := "gk888t"
-	//w := "4"
-	//h := "7"
 
 	//path := "/data/" + fileName
 	path := "/data/15867490549580640002.pdf"
 
 	// 下载文件
-	//httpResp, err := http.Get(printInfo.url)
+	//httpResp, err := http.Get(printInfo.Url)
 	//if err != nil {
+	//	// TODO 异常：下载文件失败
 	//	return nil
 	//}
 	//if httpResp.StatusCode != 200 {
+	//	// TODO 异常：下载文件失败
 	//	return nil
 	//}
 	//file, err := os.Create(path)
 	//if err != nil {
+	//	// TODO 异常：保存文件失败
 	//	return nil
 	//}
 	//io.Copy(file, httpResp.Body)
@@ -95,6 +94,7 @@ func (cupsManager CupsManager) Job(printer *string, jobId *string) *JobInfo {
 	var jobInfo JobInfo
 
 	if jobId == nil || *jobId == "" {
+		// TODO 异常：缺少参数，jobID
 		return nil
 	}
 
@@ -103,6 +103,7 @@ func (cupsManager CupsManager) Job(printer *string, jobId *string) *JobInfo {
 	jobList := cupsManager.JobList(printer, &status)
 
 	if jobList == nil {
+		// TODO 异常：找不到当前任务
 		return nil
 	}
 	for i:= 0; i<len(jobList.Jobs); i++ {
@@ -112,12 +113,18 @@ func (cupsManager CupsManager) Job(printer *string, jobId *string) *JobInfo {
 		}
 	}
 
+	if jobInfo.Id == "" {
+		// TODO 异常：找不到当前任务
+		return nil
+	}
+
 	return &jobInfo
 }
 
 func (cupsManager CupsManager) JobList(printer *string, status *string) *JobInfoList {
 
 	if printer == nil || *printer == "" || status == nil || *status == "" {
+		// TODO 异常：缺少参数
 		return nil
 	}
 
@@ -169,14 +176,13 @@ func (cupsManager CupsManager) JobList(printer *string, status *string) *JobInfo
  */
 func addedList() *List  {
 	results := exeCommand("ssh root@192.168.206.115 lpstat -p")
-
+	list := List{Printers:nil}
 	if results == "" {
-		return nil
+		return &list
 	}
 
 	usbPrinter := getUsbPrinter()
 
-	list := List{Printers:nil}
 	resultArr := strings.Split(results, "\n")
 	// 遍历打印机列表
 	for i:= 0;i<len(resultArr);i++{
@@ -222,11 +228,13 @@ func addedList() *List  {
 func notAddedList() *List  {
 	results := exeCommand("ssh root@192.168.206.115 lpinfo -v")
 
+	list := List{Printers:nil}
+
 	if results == "" {
-		return nil
+		return &list
 	}
 
-	list := List{Printers:nil}
+
 	resultArr := strings.Split(results, "\n")
 	connectedList := getConnectInfoList()
 	for _, result := range resultArr {
@@ -366,6 +374,7 @@ func exeCommand(command string) string {
 	cmd := exec.Command("/bin/bash", "-c", command)
 	if output, err = cmd.CombinedOutput(); err != nil {
 		fmt.Println(err)
+		// TODO 异常：执行命令失败
 		return ""
 	}
 
