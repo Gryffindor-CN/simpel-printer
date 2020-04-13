@@ -4,7 +4,7 @@ type Manager interface {
 
 	Add(name *string, device *string)
 
-	List(added *bool) *List
+	List(added bool) *List
 
 	Print(printInfo *PrintInfo) *PrintResult
 
@@ -14,43 +14,41 @@ type Manager interface {
 }
 
 type List struct {
-	Printers []Printer
+	Printers []Printer `json:"printers"`
 }
 
 type Printer struct {
-	Name string
-	Status string
-	Device string
-	Connected bool
-	Supported bool
+	Name string `json:"name"`
+	Status string `json:"status"`
+	Device string `json:"device"`
+	Connected bool `json:"connected"`
+	Supported bool `json:"supported"`
 }
 
 type JobInfoList struct {
-	Jobs []JobInfo
+	Jobs []JobInfo `json:"jobs"`
 }
 
 type JobInfo struct {
-	Id string
-	StartTime string
-	Status string
-	Description string
-	FileSize int64
+	Id string `json:"id"`
+	StartTime string `json:"startTime"`
+	Status string `json:"status"`
+	Description string `json:"description"`
+	FileSize int64 `json:"fileSize"`
 }
 
 type PrintInfo struct {
 	//文件下载地址
-	Url string
+	Url string `json:"url"`
 	//打印机名称
-	Printer string
+	Printer string `json:"printer"`
 	//纸张宽（cm）
-	Width string
+	Width string `json:"width"`
 	//纸张高（cm）
-	Height string
+	Height string `json:"height"`
 
 }
 
-
-
 type PrintResult struct {
-	JobId string
+	JobId string `json:"jobId"`
 }

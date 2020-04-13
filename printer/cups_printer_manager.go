@@ -13,6 +13,8 @@ type CupsManager struct {
 }
 
 func (cupsManager CupsManager) Add(name *string, device *string) {
+	// TODO 校验打印机名称是否已存在
+
 	usbPrinter := getUsbPrinter()
 
 	if device == nil || name == nil || usbPrinter == nil {
@@ -35,9 +37,9 @@ func (cupsManager CupsManager) Add(name *string, device *string) {
 	exeCommand("ssh root@192.168.206.115 cupsaccept " + *name)
 }
 
-func (cupsManager CupsManager) List(added *bool) *List {
+func (cupsManager CupsManager) List(added bool) *List {
 
-	if *added {
+	if added {
 		return addedList()
 	} else {
 		return notAddedList()
