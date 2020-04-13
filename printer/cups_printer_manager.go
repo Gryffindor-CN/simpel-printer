@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type CupsManager struct {
@@ -43,7 +44,47 @@ func (cupsManager CupsManager) List(added *bool) *List {
 	}
 }
 
-func (cupsManager CupsManager) Print() {
+func (cupsManager CupsManager) Print(printInfo *PrintInfo) *PrintResult {
+
+
+
+	// 生成文件名称（时间戳）
+	time := time.Now().UnixNano()
+	fileName := strconv.FormatInt(time,10) + ".pdf"
+	fmt.Println(fileName)
+
+	//url := "http://pan.hehuapei.com/temp/4-7.pdf"
+	//printer := "gk888t"
+	//w := "4"
+	//h := "7"
+
+	//path := "/data/" + fileName
+	path := "/data/15867490549580640002.pdf"
+
+	// 下载文件
+	//httpResp, err := http.Get(printInfo.url)
+	//if err != nil {
+	//	return nil
+	//}
+	//if httpResp.StatusCode != 200 {
+	//	return nil
+	//}
+	//file, err := os.Create(path)
+	//if err != nil {
+	//	return nil
+	//}
+	//io.Copy(file, httpResp.Body)
+	//defer file.Close()
+
+	// 打印文件
+	exeResp := exeCommand("ssh root@192.168.206.115 'lp -o media=Custom." + printInfo.Width + "x" + printInfo.Height + "cm " + path + " -d " + printInfo.Printer + "'")
+
+	//返回job ID
+	exeRespArr := strings.Fields(exeResp)
+
+	var result PrintResult
+	result.JobId = strings.Replace(exeRespArr[3], "（1", "", -1)
+	return &result
 
 }
 
@@ -62,9 +103,9 @@ func (cupsManager CupsManager) Job(printer *string, jobId *string) *JobInfo {
 	if jobList == nil {
 		return nil
 	}
-	for i:= 0; i<len(jobList.jobs); i++ {
-		job := jobList.jobs[i]
-		if job.id == *jobId {
+	for i:= 0; i<len(jobList.Jobs); i++ {
+		job := jobList.Jobs[i]
+		if job.Id == *jobId {
 			jobInfo = job
 		}
 	}
@@ -78,7 +119,7 @@ func (cupsManager CupsManager) JobList(printer *string, status *string) *JobInfo
 		return nil
 	}
 
-	jobList := JobInfoList{jobs:nil}
+	jobList := JobInfoList{Jobs:nil}
 
 	results := exeCommand("ssh root@192.168.206.115 lpstat -W " + *status + " -l -o " + *printer)
 	results = strings.Replace(results, "\t", "", -1)
@@ -94,28 +135,28 @@ func (cupsManager CupsManager) JobList(printer *string, status *string) *JobInfo
 		jobArr := strings.Split(resultArr[i], "\n")
 		//获取任务ID、名称、文件大小、开始时间
 		metaArr := strings.Fields(jobArr[0])
-		jobInfo.id = metaArr[0]
+		jobInfo.Id = metaArr[0]
 		if fileSize, err := strconv.ParseInt(metaArr[2], 10, 32); err != nil {
 			fmt.Println(err)
-			jobInfo.fileSize = 0
+			jobInfo.FileSize = 0
 		} else {
-			jobInfo.fileSize = fileSize
+			jobInfo.FileSize = fileSize
 		}
 		time := metaArr[3]
 		time += metaArr[5]
-		jobInfo.startTime = time
+		jobInfo.StartTime = time
 
 		//获取状态
 		statusStr := jobArr[2]
 		statusStr = strings.Replace(statusStr, "警告：", "", -1)
-		jobInfo.status = str2JobStatus(statusStr)
+		jobInfo.Status = str2JobStatus(statusStr)
 
 		//获取描述
 		description := jobArr[1]
 		description = strings.Replace(description, "状态：", "", -1)
-		jobInfo.description = description
+		jobInfo.Description = description
 
-		jobList.jobs = append(jobList.jobs, jobInfo)
+		jobList.Jobs = append(jobList.Jobs, jobInfo)
 	}
 
 	return &jobList
@@ -133,7 +174,7 @@ func addedList() *List  {
 
 	usbPrinter := getUsbPrinter()
 
-	list := List{printers:nil}
+	list := List{Printers:nil}
 	resultArr := strings.Split(results, "\n")
 	// 遍历打印机列表
 	for i:= 0;i<len(resultArr);i++{
@@ -145,29 +186,29 @@ func addedList() *List  {
 		// 解析打印机信息
 		metaArr := strings.Fields(resultArr[i])
 
-		printer.supported = true
-		printer.status = "unknown"
+		printer.Supported = true
+		printer.Status = "unknown"
 
 		if metaArr[2] == "目前空闲。从" {
-			printer.status = "空闲"
+			printer.Status = "空闲"
 		}
 		if metaArr[2] == "正在打印" {
-			printer.status = "打印中"
+			printer.Status = "打印中"
 		}
 		if metaArr[6] == "开始被禁用" {
-			printer.status = "禁用"
+			printer.Status = "禁用"
 		}
-		printer.name = metaArr[1]
+		printer.Name = metaArr[1]
 
 		// 判断是否已连接
-		connectInfo := getConnectInfoByName(&printer.name)
+		connectInfo := getConnectInfoByName(&printer.Name)
 
 		if usbPrinter != nil {
-			printer.connected = *connectInfo == *usbPrinter
+			printer.Connected = *connectInfo == *usbPrinter
 		}
-		printer.device = *connectInfo
+		printer.Device = *connectInfo
 
-		list.printers = append(list.printers, printer)
+		list.Printers = append(list.Printers, printer)
 	}
 
 	return &list
@@ -183,7 +224,7 @@ func notAddedList() *List  {
 		return nil
 	}
 
-	list := List{printers:nil}
+	list := List{Printers:nil}
 	resultArr := strings.Split(results, "\n")
 	connectedList := getConnectInfoList()
 	for _, result := range resultArr {
@@ -212,13 +253,13 @@ func notAddedList() *List  {
 		}
 
 		var printer Printer
-		printer.name = "unknow"
-		printer.status = "unknow"
-		printer.device = device[1]
-		printer.connected = true
-		printer.supported = checkPrinterSupport(&printer.device)
+		printer.Name = "unknow"
+		printer.Status = "unknow"
+		printer.Device = device[1]
+		printer.Connected = true
+		printer.Supported = checkPrinterSupport(&printer.Device)
 
-		list.printers = append(list.printers, printer)
+		list.Printers = append(list.Printers, printer)
 	}
 
 	return &list

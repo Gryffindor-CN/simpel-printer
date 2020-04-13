@@ -6,7 +6,7 @@ type Manager interface {
 
 	List(added *bool) *List
 
-	Print()
+	Print(printInfo *PrintInfo) *PrintResult
 
 	Job(printer *string, jobId *string) *JobInfo
 
@@ -14,26 +14,43 @@ type Manager interface {
 }
 
 type List struct {
-	printers []Printer
+	Printers []Printer
 }
 
 type Printer struct {
-	name string
-	status string
-	device string
-	connected bool
-	supported bool
+	Name string
+	Status string
+	Device string
+	Connected bool
+	Supported bool
 }
 
 type JobInfoList struct {
-	jobs []JobInfo
+	Jobs []JobInfo
 }
 
 type JobInfo struct {
-	id string
-	startTime string
-	status string
-	description string
-	fileSize int64
+	Id string
+	StartTime string
+	Status string
+	Description string
+	FileSize int64
 }
 
+type PrintInfo struct {
+	//文件下载地址
+	Url string
+	//打印机名称
+	Printer string
+	//纸张宽（cm）
+	Width string
+	//纸张高（cm）
+	Height string
+
+}
+
+
+
+type PrintResult struct {
+	JobId string
+}
