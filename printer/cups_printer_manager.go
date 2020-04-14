@@ -39,14 +39,14 @@ func (cupsManager CupsManager) Add(name *string, device *string) error {
 		return errors.New("要添加的打印机未被支持")
 	}
 
-	command := "ssh root@192.168.206.115 'lpadmin -p " + *name + " -v \"" + *device + "\" -m \"" + *driver + "\"'"
+	command := "lpadmin -p " + *name + " -v \"" + *device + "\" -m \"" + *driver + "\""
 	if _, err := exeCommand(command); err != nil {
 		return err
 	}
-	if _, err := exeCommand("ssh root@192.168.206.115 cupsenable " + *name); err != nil {
+	if _, err := exeCommand("cupsenable " + *name); err != nil {
 		return err
 	}
-	if _, err := exeCommand("ssh root@192.168.206.115 cupsaccept " + *name); err != nil {
+	if _, err := exeCommand("cupsaccept " + *name); err != nil {
 		return err
 	}
 	return nil
@@ -87,7 +87,7 @@ func (cupsManager CupsManager) Print(printInfo *PrintInfo) (*PrintResult, error)
 	//defer file.Close()
 
 	// 打印文件
-	exeResp, err := exeCommand("ssh root@192.168.206.115 'lp -o media=Custom." + printInfo.Width + "x" + printInfo.Height + "cm " + path + " -d " + printInfo.Printer + "'")
+	exeResp, err := exeCommand("'lp -o media=Custom." + printInfo.Width + "x" + printInfo.Height + "cm " + path + " -d " + printInfo.Printer + "'")
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func (cupsManager CupsManager) JobList(printer *string, status *string) (*JobInf
 
 	jobList := JobInfoList{Jobs:nil}
 
-	results, err := exeCommand("ssh root@192.168.206.115 lpstat -W " + *status + " -l -o " + *printer)
+	results, err := exeCommand("lpstat -W " + *status + " -l -o " + *printer)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func (cupsManager CupsManager) JobList(printer *string, status *string) (*JobInf
  * 获取已连接的打印机列表
  */
 func addedList() (*List, error)  {
-	results, err := exeCommand("ssh root@192.168.206.115 lpstat -p")
+	results, err := exeCommand("lpstat -p")
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +252,7 @@ func addedList() (*List, error)  {
  * 获取未连接的打印机列表
  */
 func notAddedList() (*List, error)  {
-	results, err := exeCommand("ssh root@192.168.206.115 lpinfo -v")
+	results, err := exeCommand("lpinfo -v")
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +312,7 @@ func notAddedList() (*List, error)  {
  * 获取用usb端口连接的打印机
  */
 func getUsbPrinter() (*string, error) {
-	results, err := exeCommand("ssh root@192.168.206.115 lpinfo -v")
+	results, err := exeCommand("lpinfo -v")
 	if err != nil {
 		return nil, err
 	}
@@ -345,7 +345,7 @@ func getConnectInfoByName(name *string) (*string, error)  {
 		return nil, errors.New("打印机名称为空")
 	}
 
-	results, err := exeCommand("ssh root@192.168.206.115 lpstat -v")
+	results, err := exeCommand("lpstat -v")
 	if err != nil {
 		return nil, err
 	}
@@ -376,7 +376,7 @@ func getConnectInfoByName(name *string) (*string, error)  {
  */
 func getConnectInfoList() (*[]string, error)  {
 
-	results, err := exeCommand("ssh root@192.168.206.115 lpstat -v")
+	results, err := exeCommand("lpstat -v")
 	if err != nil {
 		return nil, err
 	}
