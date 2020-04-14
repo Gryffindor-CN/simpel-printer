@@ -3,6 +3,9 @@ package printer
 import (
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -68,23 +71,23 @@ func (cupsManager CupsManager) Print(printInfo *PrintInfo) (*PrintResult, error)
 	fileName := strconv.FormatInt(timestamp,10) + ".pdf"
 	fmt.Println(fileName)
 
-	//path := "/data/" + fileName
-	path := "/data/15867490549580640002.pdf"
+	path := "/data/" + fileName
+	//path := "/data/15867490549580640002.pdf"
 
 	// 下载文件
-	//httpResp, err := http.Get(printInfo.Url)
-	//if err != nil {
-	//	return nil, errors.New("下载文件失败")
-	//}
-	//if httpResp.StatusCode != 200 {
-	//	return nil, errors.New("下载文件失败")
-	//}
-	//file, err := os.Create(path)
-	//if err != nil {
-	//	return nil, errors.New("保存文件失败")
-	//}
-	//io.Copy(file, httpResp.Body)
-	//defer file.Close()
+	httpResp, err := http.Get(printInfo.Url)
+	if err != nil {
+		return nil, errors.New("下载文件失败")
+	}
+	if httpResp.StatusCode != 200 {
+		return nil, errors.New("下载文件失败")
+	}
+	file, err := os.Create(path)
+	if err != nil {
+		return nil, errors.New("保存文件失败")
+	}
+	io.Copy(file, httpResp.Body)
+	defer file.Close()
 
 	// 打印文件
 	exeResp, err := exeCommand("'lp -o media=Custom." + printInfo.Width + "x" + printInfo.Height + "cm " + path + " -d " + printInfo.Printer + "'")
