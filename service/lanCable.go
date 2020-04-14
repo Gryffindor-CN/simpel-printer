@@ -36,7 +36,7 @@ func (lanCable *LanCable) Start() string {
 	log.Println("endpoint：" + endpoint)
 
 	//TODO 向设备服务发送接入信息
-	registerDevice(serial, "http://service.00000000ccc976a0.iotube.cn")
+	registerDevice(serial, "http://" + endpoint)
 	return ""
 }
 
