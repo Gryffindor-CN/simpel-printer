@@ -90,7 +90,7 @@ func (cupsManager CupsManager) Print(printInfo *PrintInfo) (*PrintResult, error)
 	defer file.Close()
 
 	// 打印文件
-	exeResp, err := exeCommand("'lp -o media=Custom." + printInfo.Width + "x" + printInfo.Height + "cm " + path + " -d " + printInfo.Printer + "'")
+	exeResp, err := exeCommand("lp -o media=Custom." + printInfo.Width + "x" + printInfo.Height + "cm " + path + " -d " + printInfo.Printer)
 	if err != nil {
 		return nil, err
 	}
