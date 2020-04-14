@@ -3,6 +3,7 @@ package service
 import (
 	"../printer"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -40,16 +41,21 @@ func ListPrinter(writer http.ResponseWriter, request *http.Request) {
 	// 获取参数
 	request.ParseForm()
 	form := request.Form
-	var added bool
+	var added *bool
 	for key, value := range form {
 		if key == "added" {
-			added, _ = strconv.ParseBool(value[0])
+			added = new(bool)
+			*added, _ = strconv.ParseBool(value[0])
 		}
+	}
+	if added == nil{
+		handelErr(errors.New("缺少参数：added"), writer)
+		return
 	}
 
 	// 获取打印机列表
 	var cups printer.Manager = new (printer.CupsManager)
-	list, err := cups.List(added)
+	list, err := cups.List(*added)
 	if err != nil {
 		handelErr(err, writer)
 		return
@@ -71,6 +77,12 @@ func Print(writer http.ResponseWriter, request *http.Request) {
 	var printInfo printer.PrintInfo
 	json.Unmarshal(reqBody, &printInfo)
 
+	// 校验参数
+	if printInfo.Url == "" || printInfo.Printer == "" || printInfo.Height == "" || printInfo.Width == "" {
+		handelErr(errors.New("缺少参数"), writer)
+		return
+	}
+
 	// 执行打印
 	var cups printer.Manager = new (printer.CupsManager)
 	res, err := cups.Print(&printInfo)
@@ -90,15 +102,28 @@ func Job(writer http.ResponseWriter, request *http.Request) {
 	// 获取参数
 	request.ParseForm()
 	form := request.Form
-	printerName := form["printer"][0]
-	jobId := form["jobId"][0]
+	var printerName, jobId *string
+	for key, value := range form {
+		if key == "printer" {
+			printerName = new(string)
+			*printerName = value[0]
+		}
+		if key == "jobId" {
+			jobId = new(string)
+			*jobId = value[0]
+		}
+	}
+
+	// 参数校验
+	if printerName == nil || jobId == nil {
+		handelErr(errors.New("缺少参数"), writer)
+		return
+	}
 
 	// 执行打印
 	var cups printer.Manager = new (printer.CupsManager)
 	// 查询单个任务
-	//printerName := "gt888k"
-	//jobId := "gt888k-68"
-	job, err := cups.Job(&printerName, &jobId)
+	job, err := cups.Job(printerName, jobId)
 	if err != nil {
 		handelErr(err, writer)
 		return
@@ -115,13 +140,29 @@ func JobList(writer http.ResponseWriter, request *http.Request) {
 	// 获取参数
 	request.ParseForm()
 	form := request.Form
-	printerName := form["printer"][0]
-	status := form["status"][0]
+
+	var printerName, status *string
+	for key, value := range form {
+		if key == "printer" {
+			printerName = new(string)
+			*printerName = value[0]
+		}
+		if key == "status" {
+			status = new(string)
+			*status = value[0]
+		}
+	}
+
+	// 参数校验
+	if printerName == nil || status == nil {
+		handelErr(errors.New("缺少参数"), writer)
+		return
+	}
 
 	// 执行打印
 	var cups printer.Manager = new (printer.CupsManager)
 	// 查询单个任务
-	jobList, err := cups.JobList(&printerName, &status)
+	jobList, err := cups.JobList(printerName, status)
 	if err != nil {
 		handelErr(err, writer)
 		return
