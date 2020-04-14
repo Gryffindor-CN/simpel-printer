@@ -73,7 +73,7 @@ func doConfigure(tunnel string, configPath string) {
 	cmd.Stdin = in
 	cmd.Stdout = &out
 	go func() {
-		in.WriteString("ssh root@192.168.206.115\n") //TODO 删除调试行
+		//in.WriteString("ssh root@192.168.206.115\n") //TODO 删除调试行
 		in.WriteString("cat > " + configPath + "/agent.ini" + agent_init)
 	}()
 	if err = cmd.Start(); err != nil {
@@ -107,8 +107,7 @@ func startup(agentPath string) error {
 	cmd.Stdin = in
 	cmd.Stdout = &out
 	go func() {
-		in.WriteString("ssh root@192.168.206.115\n") //TODO 删除调试行
-		//in.WriteString(filePath)
+		//in.WriteString("ssh root@192.168.206.115\n") //TODO 删除调试行
 		in.WriteString("nohup " + filePath + " > /dev/null 2>&1 &")
 	}()
 	if err = cmd.Start(); err != nil {

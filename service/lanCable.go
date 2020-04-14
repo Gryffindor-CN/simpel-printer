@@ -48,7 +48,7 @@ func getSerial() string {
 		err    error
 		str    string
 	)
-	cmd = exec.Command("/bin/bash", "-c", "ssh root@192.168.206.115 cat /proc/cpuinfo |grep Serial")
+	cmd = exec.Command("/bin/bash", "-c", "cat /proc/cpuinfo |grep Serial")
 	if output, err = cmd.CombinedOutput(); err != nil {
 		panic(err)
 	}
