@@ -3,9 +3,6 @@ package printer
 import (
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -71,23 +68,23 @@ func (cupsManager CupsManager) Print(printInfo *PrintInfo) (*PrintResult, error)
 	fileName := strconv.FormatInt(timestamp,10) + ".pdf"
 	fmt.Println(fileName)
 
-	path := "/data/" + fileName
-	//path := "/data/15867490549580640002.pdf"
+	//path := "/data/" + fileName
+	path := "/data/15867490549580640002.pdf"
 
 	// 下载文件
-	httpResp, err := http.Get(printInfo.Url)
-	if err != nil {
-		return nil, errors.New("下载文件失败")
-	}
-	if httpResp.StatusCode != 200 {
-		return nil, errors.New("下载文件失败")
-	}
-	file, err := os.Create(path)
-	if err != nil {
-		return nil, errors.New("保存文件失败")
-	}
-	io.Copy(file, httpResp.Body)
-	defer file.Close()
+	//httpResp, err := http.Get(printInfo.Url)
+	//if err != nil {
+	//	return nil, errors.New("下载文件失败")
+	//}
+	//if httpResp.StatusCode != 200 {
+	//	return nil, errors.New("下载文件失败")
+	//}
+	//file, err := os.Create(path)
+	//if err != nil {
+	//	return nil, errors.New("保存文件失败")
+	//}
+	//io.Copy(file, httpResp.Body)
+	//defer file.Close()
 
 	// 打印文件
 	exeResp, err := exeCommand("ssh root@192.168.206.115 'lp -o media=Custom." + printInfo.Width + "x" + printInfo.Height + "cm " + path + " -d " + printInfo.Printer + "'")
@@ -217,16 +214,20 @@ func addedList() (*List, error)  {
 		metaArr := strings.Fields(resultArr[i])
 
 		printer.Supported = true
-		printer.Status = "unknown"
+		printer.StatusCn = "unknown"
+		printer.StatusEn = "未知"
 
 		if metaArr[2] == "目前空闲。从" {
-			printer.Status = "空闲"
+			printer.StatusCn = "空闲"
+			printer.StatusEn = "idle"
 		}
 		if metaArr[2] == "正在打印" {
-			printer.Status = "打印中"
+			printer.StatusCn = "打印中"
+			printer.StatusEn = "printing"
 		}
 		if metaArr[6] == "开始被禁用" {
-			printer.Status = "禁用"
+			printer.StatusCn = "禁用"
+			printer.StatusEn = "disable"
 		}
 		printer.Name = metaArr[1]
 
@@ -295,7 +296,8 @@ func notAddedList() (*List, error)  {
 
 		var printer Printer
 		printer.Name = "unknow"
-		printer.Status = "unknow"
+		printer.StatusCn = "unknow"
+		printer.StatusEn = "未知"
 		printer.Device = device[1]
 		printer.Connected = true
 		printer.Supported = checkPrinterSupport(&printer.Device)

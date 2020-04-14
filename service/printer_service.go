@@ -9,10 +9,49 @@ import (
 	"strconv"
 )
 
+/**
+ * @api {POST} /printer/add 添加打印机
+ * @apiGroup printer
+ * @apiName printerAdd
+ * @apiDescription 添加打印机
+ *
+ * @apiParam {String} printer 打印机名称
+ * @apiParam {String} device 设备信息
+ *
+ * @apiParamExample 请求示例
+ * POST:/printer/add
+ * {
+ *	"printer":"gk888t6",
+ *	"device":"usb://Zebra%20Technologies/ZTC%20GK888t%20(EPL)?serial=19J193906076"
+ * }
+ *
+ * @apiSuccess {String} code 返回码
+ * @apiSuccess {String} message 返回消息
+ * @apiSuccess {Object} result 返回结果
+ *
+ * @apiSuccessExample 正确时的返回JSON数据包如下
+ * {
+ *     "code": "0",
+ *     "message": "OK",
+ *     "result": null
+ * }
+ *
+ * @apiError printer.99 测试错误
+ * @apiErrorExample 错误时的返回JSON数据包如下（示例为缺少参数）
+ * {
+ *     "code": "printer.99",
+ *     "message": "测试错误"
+ * }
+ */
 func AddPrinter(writer http.ResponseWriter, request *http.Request) {
 
+	if request.Method != "POST" {
+		handelErr(errors.New("不支持的方法：" + request.Method), writer)
+		return
+	}
+
 	// 获取body
-	reqBody, _ :=ioutil.ReadAll(request.Body)
+	reqBody, _ := ioutil.ReadAll(request.Body)
 	var printerReq PrinterReq
 	json.Unmarshal(reqBody, &printerReq)
 
@@ -25,10 +64,7 @@ func AddPrinter(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	// response
-	str := "{\"code\":\"0\",\"message\":\"ok\"}"
-	var body = []byte(str)
-	writer.Header().Set("Content-Type","application/json")
-	writer.Write(body)
+	handelResp(nil, writer)
 }
 
 type PrinterReq struct {
@@ -62,9 +98,7 @@ func ListPrinter(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	// response
-	str, _ := json.Marshal(list)
-	writer.Header().Set("Content-Type","application/json")
-	writer.Write(str)
+	handelResp(list, writer)
 }
 
 func Print(writer http.ResponseWriter, request *http.Request) {
@@ -91,10 +125,7 @@ func Print(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	// response
-	str, _ := json.Marshal(res)
-	writer.Header().Set("Content-Type","application/json")
-	writer.Write(str)
+	handelResp(res, writer)
 }
 
 func Job(writer http.ResponseWriter, request *http.Request) {
@@ -129,10 +160,7 @@ func Job(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	// response
-	str, _ := json.Marshal(job)
-	writer.Header().Set("Content-Type","application/json")
-	writer.Write(str)
+	handelResp(job, writer)
 }
 
 func JobList(writer http.ResponseWriter, request *http.Request) {
@@ -159,26 +187,33 @@ func JobList(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	// 执行打印
-	var cups printer.Manager = new (printer.CupsManager)
 	// 查询单个任务
+	var cups printer.Manager = new (printer.CupsManager)
 	jobList, err := cups.JobList(printerName, status)
 	if err != nil {
 		handelErr(err, writer)
 		return
 	}
 
-	// response
-	str, _ := json.Marshal(jobList)
-	writer.Header().Set("Content-Type","application/json")
-	writer.Write(str)
+	handelResp(jobList, writer)
 }
 
 func handelErr(err error, writer http.ResponseWriter)  {
 	var error PrinterError
-	error.Code = "99"
+	error.Code = "printer.99"
 	error.Message = err.Error()
 	str, _ := json.Marshal(error)
+	writer.Header().Set("Content-Type","application/json")
+	writer.Write(str)
+}
+
+func handelResp(obj interface{}, writer http.ResponseWriter)  {
+	var response PrinterResponse
+	// response
+	response.Code = "0"
+	response.Message = "OK"
+	response.Result = obj
+	str, _ := json.Marshal(response)
 	writer.Header().Set("Content-Type","application/json")
 	writer.Write(str)
 }
@@ -186,4 +221,10 @@ func handelErr(err error, writer http.ResponseWriter)  {
 type PrinterError struct {
 	Code string `json:"code"`
 	Message string `json:"message"`
+}
+
+type PrinterResponse struct {
+	Code string `json:"code"`
+	Message string `json:"message"`
+	Result  interface{}`json:"result"`
 }

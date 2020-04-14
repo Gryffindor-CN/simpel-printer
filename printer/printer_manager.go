@@ -19,7 +19,8 @@ type List struct {
 
 type Printer struct {
 	Name string `json:"name"`
-	Status string `json:"status"`
+	StatusCn string `json:"statusCn"`
+	StatusEn string `json:"statusEn"`
 	Device string `json:"device"`
 	Connected bool `json:"connected"`
 	Supported bool `json:"supported"`
