@@ -1,9 +1,10 @@
 package main
 
-import(
-	"github.com/Gryffindor-CN/simpel-printer/"
+import (
+	"./service"
 )
 
 func main() {
-	var bootstrap Bootstrap = new(LanCable)
+	var bootStrap service.Bootstrap = new (service.LanCable)
+	bootStrap.Start()
 }
