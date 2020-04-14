@@ -11,16 +11,17 @@ import (
 func AddPrinter(writer http.ResponseWriter, request *http.Request) {
 
 	// 获取body
-	reqBody, err :=ioutil.ReadAll(request.Body)
-	if err != nil {
-		panic(err)
-	}
+	reqBody, _ :=ioutil.ReadAll(request.Body)
 	var printerReq PrinterReq
 	json.Unmarshal(reqBody, &printerReq)
 
 	// 添加打印机
 	var cups printer.Manager = new (printer.CupsManager)
-	cups.Add(&printerReq.Printer, &printerReq.Device)
+	err := cups.Add(&printerReq.Printer, &printerReq.Device)
+	if err != nil {
+		handelErr(err, writer)
+		return
+	}
 
 	// response
 	str := "{\"code\":\"0\",\"message\":\"ok\"}"
@@ -48,7 +49,11 @@ func ListPrinter(writer http.ResponseWriter, request *http.Request) {
 
 	// 获取打印机列表
 	var cups printer.Manager = new (printer.CupsManager)
-	list := cups.List(added)
+	list, err := cups.List(added)
+	if err != nil {
+		handelErr(err, writer)
+		return
+	}
 
 	// response
 	str, _ := json.Marshal(list)
@@ -68,7 +73,11 @@ func Print(writer http.ResponseWriter, request *http.Request) {
 
 	// 执行打印
 	var cups printer.Manager = new (printer.CupsManager)
-	res := cups.Print(&printInfo)
+	res, err := cups.Print(&printInfo)
+	if err != nil {
+		handelErr(err, writer)
+		return
+	}
 
 	// response
 	str, _ := json.Marshal(res)
@@ -89,7 +98,11 @@ func Job(writer http.ResponseWriter, request *http.Request) {
 	// 查询单个任务
 	//printerName := "gt888k"
 	//jobId := "gt888k-68"
-	job := cups.Job(&printerName, &jobId)
+	job, err := cups.Job(&printerName, &jobId)
+	if err != nil {
+		handelErr(err, writer)
+		return
+	}
 
 	// response
 	str, _ := json.Marshal(job)
@@ -108,10 +121,28 @@ func JobList(writer http.ResponseWriter, request *http.Request) {
 	// 执行打印
 	var cups printer.Manager = new (printer.CupsManager)
 	// 查询单个任务
-	jobList := cups.JobList(&printerName, &status)
+	jobList, err := cups.JobList(&printerName, &status)
+	if err != nil {
+		handelErr(err, writer)
+		return
+	}
 
 	// response
 	str, _ := json.Marshal(jobList)
 	writer.Header().Set("Content-Type","application/json")
 	writer.Write(str)
+}
+
+func handelErr(err error, writer http.ResponseWriter)  {
+	var error PrinterError
+	error.Code = "99"
+	error.Message = err.Error()
+	str, _ := json.Marshal(error)
+	writer.Header().Set("Content-Type","application/json")
+	writer.Write(str)
+}
+
+type PrinterError struct {
+	Code string `json:"code"`
+	Message string `json:"message"`
 }

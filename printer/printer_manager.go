@@ -2,15 +2,15 @@ package printer
 
 type Manager interface {
 
-	Add(name *string, device *string)
+	Add(name *string, device *string) error
 
-	List(added bool) *List
+	List(added bool) (*List, error)
 
-	Print(printInfo *PrintInfo) *PrintResult
+	Print(printInfo *PrintInfo) (*PrintResult, error)
 
-	Job(printer *string, jobId *string) *JobInfo
+	Job(printer *string, jobId *string) (*JobInfo, error)
 
-	JobList(printer *string, status *string) *JobInfoList
+	JobList(printer *string, status *string) (*JobInfoList, error)
 }
 
 type List struct {

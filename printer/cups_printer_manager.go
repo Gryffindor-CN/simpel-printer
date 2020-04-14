@@ -1,6 +1,7 @@
 package printer
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"strconv"
@@ -12,35 +13,46 @@ type CupsManager struct {
 	
 }
 
-func (cupsManager CupsManager) Add(name *string, device *string) {
+func (cupsManager CupsManager) Add(name *string, device *string) error {
 	// TODO 校验打印机名称是否已存在
 
-	usbPrinter := getUsbPrinter()
-
-	if device == nil || name == nil || usbPrinter == nil {
-		// TODO 异常：缺少参数
-		return
+	usbPrinter, err := getUsbPrinter()
+	if err != nil {
+		return nil
 	}
 
-	if *device != *usbPrinter {
-		// TODO 异常：要添加的打印机未连接
-		return
+	if device == nil || name == nil {
+		return errors.New("缺少参数")
+	}
+
+	if *device == "" || *name == "" {
+		return errors.New("缺少参数")
+	}
+
+	if usbPrinter == nil || *usbPrinter == "" || *device != *usbPrinter {
+		return errors.New("要添加的打印机未连接")
 	}
 
 	driver := getPrinterDriver(device)
 
 	if driver == nil {
-		// TODO 异常：要添加的打印机未被支持
-		return
+		return errors.New("要添加的打印机未被支持")
 	}
 
 	command := "ssh root@192.168.206.115 'lpadmin -p " + *name + " -v \"" + *device + "\" -m \"" + *driver + "\"'"
-	exeCommand(command)
-	exeCommand("ssh root@192.168.206.115 cupsenable " + *name)
-	exeCommand("ssh root@192.168.206.115 cupsaccept " + *name)
+	if _, err := exeCommand(command); err != nil {
+		return err
+	}
+	if _, err := exeCommand("ssh root@192.168.206.115 cupsenable " + *name); err != nil {
+		return err
+	}
+	if _, err := exeCommand("ssh root@192.168.206.115 cupsaccept " + *name); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (cupsManager CupsManager) List(added bool) *List {
+func (cupsManager CupsManager) List(added bool) (*List, error) {
 
 	if added {
 		return addedList()
@@ -49,7 +61,7 @@ func (cupsManager CupsManager) List(added bool) *List {
 	}
 }
 
-func (cupsManager CupsManager) Print(printInfo *PrintInfo) *PrintResult {
+func (cupsManager CupsManager) Print(printInfo *PrintInfo) (*PrintResult, error) {
 
 	// 生成文件名称（时间戳）
 	timestamp := time.Now().UnixNano()
@@ -62,49 +74,49 @@ func (cupsManager CupsManager) Print(printInfo *PrintInfo) *PrintResult {
 	// 下载文件
 	//httpResp, err := http.Get(printInfo.Url)
 	//if err != nil {
-	//	// TODO 异常：下载文件失败
-	//	return nil
+	//	return nil, errors.New("下载文件失败")
 	//}
 	//if httpResp.StatusCode != 200 {
-	//	// TODO 异常：下载文件失败
-	//	return nil
+	//	return nil, errors.New("下载文件失败")
 	//}
 	//file, err := os.Create(path)
 	//if err != nil {
-	//	// TODO 异常：保存文件失败
-	//	return nil
+	//	return nil, errors.New("保存文件失败")
 	//}
 	//io.Copy(file, httpResp.Body)
 	//defer file.Close()
 
 	// 打印文件
-	exeResp := exeCommand("ssh root@192.168.206.115 'lp -o media=Custom." + printInfo.Width + "x" + printInfo.Height + "cm " + path + " -d " + printInfo.Printer + "'")
-
+	exeResp, err := exeCommand("ssh root@192.168.206.115 'lp -o media=Custom." + printInfo.Width + "x" + printInfo.Height + "cm " + path + " -d " + printInfo.Printer + "'")
+	if err != nil {
+		return nil, err
+	}
 	//返回job ID
-	exeRespArr := strings.Fields(exeResp)
+	exeRespArr := strings.Fields(*exeResp)
 
 	var result PrintResult
 	result.JobId = strings.Replace(exeRespArr[3], "（1", "", -1)
-	return &result
+	return &result, nil
 
 }
 
-func (cupsManager CupsManager) Job(printer *string, jobId *string) *JobInfo {
+func (cupsManager CupsManager) Job(printer *string, jobId *string) (*JobInfo, error) {
 
 	var jobInfo JobInfo
 
 	if jobId == nil || *jobId == "" {
-		// TODO 异常：缺少参数，jobID
-		return nil
+		return nil, errors.New("缺少参数")
 	}
 
 	status := "all"
 
-	jobList := cupsManager.JobList(printer, &status)
+	jobList, err := cupsManager.JobList(printer, &status)
+	if err != nil {
+		return nil, err
+	}
 
 	if jobList == nil {
-		// TODO 异常：找不到当前任务
-		return nil
+		return nil, errors.New("找不到当前id为" + *jobId + "任务")
 	}
 	for i:= 0; i<len(jobList.Jobs); i++ {
 		job := jobList.Jobs[i]
@@ -114,26 +126,27 @@ func (cupsManager CupsManager) Job(printer *string, jobId *string) *JobInfo {
 	}
 
 	if jobInfo.Id == "" {
-		// TODO 异常：找不到当前任务
-		return nil
+		return nil, errors.New("找不到当前id为" + *jobId + "任务")
 	}
 
-	return &jobInfo
+	return &jobInfo, nil
 }
 
-func (cupsManager CupsManager) JobList(printer *string, status *string) *JobInfoList {
+func (cupsManager CupsManager) JobList(printer *string, status *string) (*JobInfoList, error) {
 
 	if printer == nil || *printer == "" || status == nil || *status == "" {
-		// TODO 异常：缺少参数
-		return nil
+		return nil, errors.New("缺少参数")
 	}
 
 	jobList := JobInfoList{Jobs:nil}
 
-	results := exeCommand("ssh root@192.168.206.115 lpstat -W " + *status + " -l -o " + *printer)
-	results = strings.Replace(results, "\t", "", -1)
+	results, err := exeCommand("ssh root@192.168.206.115 lpstat -W " + *status + " -l -o " + *printer)
+	if err != nil {
+		return nil, err
+	}
+	*results = strings.Replace(*results, "\t", "", -1)
 
-	resultArr := strings.Split(results, "列队\n")
+	resultArr := strings.Split(*results, "列队\n")
 
 	for i:= 0; i<len(resultArr); i++ {
 		if resultArr[i] == "" {
@@ -168,22 +181,28 @@ func (cupsManager CupsManager) JobList(printer *string, status *string) *JobInfo
 		jobList.Jobs = append(jobList.Jobs, jobInfo)
 	}
 
-	return &jobList
+	return &jobList, nil
 }
 
 /**
  * 获取已连接的打印机列表
  */
-func addedList() *List  {
-	results := exeCommand("ssh root@192.168.206.115 lpstat -p")
+func addedList() (*List, error)  {
+	results, err := exeCommand("ssh root@192.168.206.115 lpstat -p")
+	if err != nil {
+		return nil, err
+	}
 	list := List{Printers:nil}
-	if results == "" {
-		return &list
+	if results == nil || *results == "" {
+		return &list, nil
 	}
 
-	usbPrinter := getUsbPrinter()
+	usbPrinter, err := getUsbPrinter()
+	if err != nil {
+		return nil, err
+	}
 
-	resultArr := strings.Split(results, "\n")
+	resultArr := strings.Split(*results, "\n")
 	// 遍历打印机列表
 	for i:= 0;i<len(resultArr);i++{
 		if resultArr[i] == "" || resultArr[i] == "\t未知原因" || resultArr[i] == "\tPaused" || resultArr[i] == "\tWaiting for printer to become available." {
@@ -209,7 +228,10 @@ func addedList() *List  {
 		printer.Name = metaArr[1]
 
 		// 判断是否已连接
-		connectInfo := getConnectInfoByName(&printer.Name)
+		connectInfo, err := getConnectInfoByName(&printer.Name)
+		if err != nil {
+			return nil, err
+		}
 
 		if usbPrinter != nil {
 			printer.Connected = *connectInfo == *usbPrinter
@@ -219,24 +241,30 @@ func addedList() *List  {
 		list.Printers = append(list.Printers, printer)
 	}
 
-	return &list
+	return &list, nil
 }
 
 /**
  * 获取未连接的打印机列表
  */
-func notAddedList() *List  {
-	results := exeCommand("ssh root@192.168.206.115 lpinfo -v")
+func notAddedList() (*List, error)  {
+	results, err := exeCommand("ssh root@192.168.206.115 lpinfo -v")
+	if err != nil {
+		return nil, err
+	}
 
 	list := List{Printers:nil}
 
-	if results == "" {
-		return &list
+	if results == nil || *results == "" {
+		return &list, nil
 	}
 
 
-	resultArr := strings.Split(results, "\n")
-	connectedList := getConnectInfoList()
+	resultArr := strings.Split(*results, "\n")
+	connectedList, err := getConnectInfoList()
+	if err != nil {
+		return  nil, err
+	}
 	for _, result := range resultArr {
 		if result == "" {
 			continue
@@ -272,20 +300,22 @@ func notAddedList() *List  {
 		list.Printers = append(list.Printers, printer)
 	}
 
-	return &list
+	return &list, nil
 }
 
 /**
  * 获取用usb端口连接的打印机
  */
-func getUsbPrinter() *string {
-	results := exeCommand("ssh root@192.168.206.115 lpinfo -v")
-
-	if results == "" {
-		return nil
+func getUsbPrinter() (*string, error) {
+	results, err := exeCommand("ssh root@192.168.206.115 lpinfo -v")
+	if err != nil {
+		return nil, err
+	}
+	if results == nil || *results == "" {
+		return nil,nil
 	}
 
-	resultArr := strings.Split(results, "\n")
+	resultArr := strings.Split(*results, "\n")
 
 	for i:= 0;i<len(resultArr);i++{
 		if resultArr[i] == "" {
@@ -294,29 +324,31 @@ func getUsbPrinter() *string {
 
 		if strings.HasPrefix(resultArr[i], "direct usb://") {
 			device := strings.Fields(resultArr[i])
-			return &device[1]
+			return &device[1], nil
 		}
 	}
 
-	return nil
+	return nil, nil
 }
 
 /**
  * 根据打印机名称获取连接信息
  */
-func getConnectInfoByName(name *string) *string  {
+func getConnectInfoByName(name *string) (*string, error)  {
 
 	if name == nil {
-		return nil
+		return nil, errors.New("打印机名称为空")
 	}
 
-	results := exeCommand("ssh root@192.168.206.115 lpstat -v")
-
-	if results == "" {
-		return nil
+	results, err := exeCommand("ssh root@192.168.206.115 lpstat -v")
+	if err != nil {
+		return nil, err
+	}
+	if results == nil || *results == "" {
+		return nil, nil
 	}
 
-	resultArr := strings.Split(results, "\n")
+	resultArr := strings.Split(*results, "\n")
 
 	for i:= 0;i<len(resultArr);i++{
 		if resultArr[i] == "" {
@@ -327,25 +359,28 @@ func getConnectInfoByName(name *string) *string  {
 
 		if device[1] == *name {
 			connectInfo := strings.Replace(device[2], "的设备：", "", -1)
-			return &connectInfo
+			return &connectInfo, nil
 		}
 
 	}
-	return nil
+	return nil, nil
 }
 
 /**
  * 获取已添加的打印机连接信息列表
  */
-func getConnectInfoList() *[]string  {
+func getConnectInfoList() (*[]string, error)  {
 
-	results := exeCommand("ssh root@192.168.206.115 lpstat -v")
-
-	if results == "" {
-		return nil
+	results, err := exeCommand("ssh root@192.168.206.115 lpstat -v")
+	if err != nil {
+		return nil, err
 	}
 
-	resultArr := strings.Split(results, "\n")
+	if results == nil || *results == "" {
+		return nil, nil
+	}
+
+	resultArr := strings.Split(*results, "\n")
 
 	var list []string
 
@@ -359,13 +394,13 @@ func getConnectInfoList() *[]string  {
 		list = append(list, strings.Replace(device[2], "的设备：", "", -1))
 
 	}
-	return &list
+	return &list, nil
 }
 
 /**
  * 执行命令并返回输出
  */
-func exeCommand(command string) string {
+func exeCommand(command string) (*string, error) {
 	// 执行命令
 	var (
 		output []byte
@@ -375,11 +410,12 @@ func exeCommand(command string) string {
 	if output, err = cmd.CombinedOutput(); err != nil {
 		fmt.Println(err)
 		// TODO 异常：执行命令失败
-		return ""
+		return nil, errors.New("执行命令失败")
 	}
 
 	// 解析返回结果
-	return string(output)
+	res := string(output)
+	return &res, nil
 }
 
 /**
@@ -420,6 +456,7 @@ func getPrinterDriver(device *string) *string  {
 			driver = "drv:///sample.drv/zebraep2.ppd"
 			break
 		default:
+			// TODO 输出日志
 			return nil
 	}
 
