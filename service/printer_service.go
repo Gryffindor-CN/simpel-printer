@@ -1,7 +1,7 @@
-package service_printer
+package service
 
 import (
-	"../../printer"
+	"../printer"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
