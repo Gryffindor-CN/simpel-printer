@@ -28,12 +28,10 @@ func (lanCable *LanCable) Start() string {
 
 	// 获得机器码
 	serial = getSerial()
-	log.Println("获得机器码：" + serial)
 
 	// 打开agent，注册httpmap
 	proxy = _net.NewPortwayProxy(serial, AGENT_PATH)
 	endpoint := proxy.Register()
-	log.Println("endpoint：" + endpoint)
 
 	//TODO 向设备服务发送接入信息
 	registerDevice(serial, "http://" + endpoint)
@@ -48,16 +46,13 @@ func getSerial() string {
 		err    error
 		str    string
 	)
-	cmd = exec.Command("/bin/bash", "-c", "cat /proc/cpuinfo |grep Serial")
+	cmd = exec.Command("/bin/bash", "-c", "cat /sys/class/net/eth0/address")
 	if output, err = cmd.CombinedOutput(); err != nil {
 		panic(err)
 	}
 	str = strings.Replace(string(output), "\n", "", -1)
-
-	index := strings.Index(str, "Serial")
-	newStr := str[index:]
-	newIndex := strings.Index(newStr, ":")
-	return newStr[newIndex+2:]
+	str = strings.Replace(str, ":", "", -1)
+	return str
 }
 
 type Response struct {
@@ -82,7 +77,11 @@ func registerDevice(serial string, endpoint string) {
 		//TODO json 格式化异常处理
 	}
 	fmt.Println(response)
-	if response.Code != "ok" {
-		//TODO 请求异常处理
+
+	switch response.Code {
+	case "0":
+		log.Printf("成功接入设备服务：%s，您可以使用：%s 访问", serial, endpoint)
+	default:
+		log.Println("设备服务接入失败：" + response.Message)
 	}
 }
