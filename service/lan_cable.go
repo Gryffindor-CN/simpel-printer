@@ -12,7 +12,7 @@ import (
 )
 
 const(
-	AGENT_PATH string = "/root/cp/portway_arm"
+	AGENT_PATH string = "./"
 	DEVICE_SERVER_ENDPOINT string = "http://iot-device.dev.iotube.net/devices"
 )
 
