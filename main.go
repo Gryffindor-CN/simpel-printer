@@ -20,8 +20,13 @@ func ServeHttp(w http.ResponseWriter, r *http.Request) {
 	proxy.ServeHTTP(w, r)
 }
 
+func PingHttp(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("pong"))
+}
+
 func startServer() {
 	http.HandleFunc("/", ServeHttp)
+	http.HandleFunc("/ping", PingHttp)
 	http.HandleFunc("/printer/add", service.AddPrinter)
 	http.HandleFunc("/printer/list", service.ListPrinter)
 	http.HandleFunc("/printer/print", service.Print)
