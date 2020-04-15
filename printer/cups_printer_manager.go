@@ -191,11 +191,9 @@ func (cupsManager CupsManager) JobList(printer *string, status *string) (*JobInf
  * 获取已连接的打印机列表
  */
 func addedList() (*List, error)  {
-	results, err := exeCommand("lpstat -p")
-	if err != nil {
-		return nil, err
-	}
-	list := List{Printers:nil}
+	results, _ := exeCommand("lpstat -p")
+
+	list := List{Printers:[]Printer{}}
 	if results == nil || *results == "" {
 		return &list, nil
 	}
@@ -255,12 +253,9 @@ func addedList() (*List, error)  {
  * 获取未连接的打印机列表
  */
 func notAddedList() (*List, error)  {
-	results, err := exeCommand("lpinfo -v")
-	if err != nil {
-		return nil, err
-	}
+	results, _ := exeCommand("lpinfo -v")
 
-	list := List{Printers:nil}
+	list := List{Printers:[]Printer{}}
 
 	if results == nil || *results == "" {
 		return &list, nil
@@ -412,10 +407,9 @@ func exeCommand(command string) (*string, error) {
 		output []byte
 		err error
 	)
+	//cmd := exec.Command("/bin/bash", "-c", "ssh root@192.168.206.115 '" + command + "'")
 	cmd := exec.Command("/bin/bash", "-c", command)
 	if output, err = cmd.CombinedOutput(); err != nil {
-		fmt.Println(err)
-		// TODO 异常：执行命令失败
 		return nil, errors.New("执行命令失败")
 	}
 
