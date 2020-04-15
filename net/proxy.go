@@ -67,6 +67,7 @@ func doConfigure(tunnel string, configPath string) {
 			"service_desc=\n\n" +
 			"[httpmap]\n" +
 			tag + "=127.0.0.1:8888\n" +
+			"java=127.0.0.1:8080\n" +
 			"EOF"
 	)
 	cmd = exec.Command("/bin/bash")
