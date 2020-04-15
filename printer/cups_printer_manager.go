@@ -268,10 +268,8 @@ func notAddedList() (*List, error)  {
 
 
 	resultArr := strings.Split(*results, "\n")
-	connectedList, err := getConnectInfoList()
-	if err != nil {
-		return  nil, err
-	}
+	connectedList, _ := getConnectInfoList()
+	
 	for _, result := range resultArr {
 		if result == "" {
 			continue
