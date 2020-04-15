@@ -38,10 +38,11 @@ func (portway *PortwayProxy) Register() string {
 
 	var bts bytes.Buffer
 	bts.WriteString(tag)
-	bts.WriteString(".")
+	bts.WriteString("___")
+	bts.WriteString("iotube-")
 	bts.WriteString(portway.tunnel)
 	bts.WriteString(".")
-	bts.WriteString("iotube.cn")
+	bts.WriteString("iotube.net")
 	return bts.String()
 }
 
@@ -54,10 +55,10 @@ func doConfigure(tunnel string, configPath string) {
 		out        bytes.Buffer
 		agent_init = " << EOF\n" +
 			"[setting]\n" +
-			"center_host=gw.isuf.cn\n" +
+			"center_host=gw.iotube.net\n" +
 			"center_webapi=http://info.iotube.net\n" +
 			"center_port=80\n" +
-			"tunnel=" + tunnel + "\n" +
+			"tunnel=" + "iotube-" + tunnel + "\n" +
 			"apiport=27093\n" +
 			"apipath=/api/v1\n" +
 			"token=\n" +
