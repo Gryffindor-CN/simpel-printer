@@ -47,6 +47,8 @@ type PrintInfo struct {
 	Width string `json:"width"`
 	//纸张高（cm）
 	Height string `json:"height"`
+	//数量
+	Quantity string `json:"quantity"`
 
 }
 

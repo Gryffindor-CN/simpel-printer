@@ -90,7 +90,8 @@ func (cupsManager CupsManager) Print(printInfo *PrintInfo) (*PrintResult, error)
 	defer file.Close()
 
 	// 打印文件
-	exeResp, err := exeCommand("lp -o media=Custom." + printInfo.Width + "x" + printInfo.Height + "cm " + path + " -d " + printInfo.Printer)
+	cmd := "lp -o orientation-requested=6 -o print-quality=3 -o media=Custom." + printInfo.Width + "x" + printInfo.Height + "cm -n " + printInfo.Quantity + " -d " + printInfo.Printer + " " + path;
+	exeResp, err := exeCommand(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -453,7 +454,7 @@ func getPrinterDriver(device *string) *string  {
 
 	switch deviceArr[0] {
 		case "usb://Zebra%20Technologies/ZTC%20GK888t%20(EPL)":
-			driver = "drv:///sample.drv/zebraep2.ppd"
+			driver = "drv:///sample.drv/zebra.ppd"
 			break
 		default:
 			// TODO 输出日志
