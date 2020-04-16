@@ -4,6 +4,8 @@ type Manager interface {
 
 	Add(name *string, device *string) error
 
+	Delete(name *string)
+
 	List(added bool) (*List, error)
 
 	Print(printInfo *PrintInfo) (*PrintResult, error)

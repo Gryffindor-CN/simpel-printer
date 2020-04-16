@@ -188,6 +188,11 @@ func (cupsManager CupsManager) JobList(printer *string, status *string) (*JobInf
 	return &jobList, nil
 }
 
+func (cupsManager CupsManager) Delete(name *string)  {
+	command := "lpadmin -x " + *name
+	exeCommand(command)
+}
+
 /**
  * 获取已连接的打印机列表
  */
