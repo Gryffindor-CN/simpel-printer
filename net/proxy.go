@@ -1,10 +1,11 @@
 package net
 
 import (
+	"../common"
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
+	"github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
 )
@@ -29,11 +30,13 @@ func NewPortwayProxy(tunnel string, agentPath string) *PortwayProxy {
 // 注册httpMap,并返回endpoint
 func (portway *PortwayProxy) Register() string {
 	// 生成配置文件
-	doConfigure(portway.tunnel, portway.agentPath)
+	if err := doConfigure(portway.tunnel, portway.agentPath); err != nil {
+		common.Log.WithFields(logrus.Fields{"message": err.Error()}).Error("[x]", "Portway agent 写入配置文件 agent.ini 出现出现错误")
+	}
 
 	// 启动agent
 	if err := startup(portway.agentPath); err != nil {
-		log.Println("[x]", "Portway agent 启动失败：" + err.Error())
+		common.Log.WithFields(logrus.Fields{"message": err.Error()}).Error("[x]", "Portway agent 启动失败")
 	}
 
 	var bts bytes.Buffer
@@ -47,7 +50,7 @@ func (portway *PortwayProxy) Register() string {
 }
 
 // 生成配置文件 agent.ini
-func doConfigure(tunnel string, configPath string) {
+func doConfigure(tunnel string, configPath string) error {
 	var(
 		cmd        *exec.Cmd
 		err        error
@@ -79,13 +82,12 @@ func doConfigure(tunnel string, configPath string) {
 		in.WriteString("cat > " + configPath + "/agent.ini" + agent_init)
 	}()
 	if err = cmd.Start(); err != nil {
-		log.Fatal(err)
-		panic(err)
+		return errors.New(err.Error())
 	}
 	if err = cmd.Wait(); err != nil {
-		fmt.Println("Command finished with error: %v", err)
-		panic(err)
+		return errors.New(err.Error())
 	}
+	return nil
 }
 
 func startup(agentPath string) error {
@@ -113,14 +115,12 @@ func startup(agentPath string) error {
 		in.WriteString("nohup " + filePath + " > /dev/null 2>&1 &")
 	}()
 	if err = cmd.Start(); err != nil {
-		log.Fatal(err)
-		panic(err)
+		return errors.New(err.Error())
 	}
 	if err = cmd.Wait(); err != nil {
 		fmt.Println("Command finished with error: %v", err)
-		panic(err)
+		return errors.New(err.Error())
 	}
-	log.Println(out.String())
 	return nil
 }
 

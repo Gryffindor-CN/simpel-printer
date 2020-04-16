@@ -1,11 +1,11 @@
 package service
 
 import (
+	"../common"
 	_net "../net"
 	"encoding/json"
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os/exec"
 	"strings"
@@ -76,12 +76,11 @@ func registerDevice(serial string, endpoint string) {
 	if err = json.Unmarshal(bodyStr, &response); err != nil {
 		//TODO json 格式化异常处理
 	}
-	fmt.Println(response)
 
 	switch response.Code {
-	case "0":
-		log.Printf("成功接入设备服务：%s，您可以使用：%s 访问", serial, endpoint)
-	default:
-		log.Println("设备服务接入失败：" + response.Message)
+		case "0":
+			common.Log.WithFields(logrus.Fields{"serial": serial,"endpoint": endpoint}).Info("[√] 成功接入设备服务")
+		default:
+			common.Log.WithFields(logrus.Fields{"message": response.Message}).Error("[x] 设备服务接入失败")
 	}
 }
