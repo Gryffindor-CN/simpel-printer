@@ -33,6 +33,7 @@ func startServer() {
 	http.HandleFunc("/printer/print", service.Print)
 	http.HandleFunc("/printer/job", service.Job)
 	http.HandleFunc("/printer/job/list", service.JobList)
+	http.HandleFunc("/device/logs", service.GetLogs)
 	http.ListenAndServe(":8888", nil)
 }
 
@@ -44,8 +45,8 @@ func main() {
 	//}).Error("A group of walrus emerges from the ocean")
 	//common.Log.Info("info test.")
 
-	var bootStrap service.Bootstrap = new (service.LanCable)
-	bootStrap.Start()
+	//var bootStrap service.Bootstrap = new (service.LanCable)
+	//bootStrap.Start()
 	startServer()
 }
 
