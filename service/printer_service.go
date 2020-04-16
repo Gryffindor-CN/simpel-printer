@@ -74,6 +74,11 @@ type PrinterReq struct {
 
 func ListPrinter(writer http.ResponseWriter, request *http.Request) {
 
+	if request.Method != "GET" {
+		handelErr(errors.New("不支持的方法：" + request.Method), writer)
+		return
+	}
+
 	// 获取参数
 	request.ParseForm()
 	form := request.Form
@@ -103,6 +108,11 @@ func ListPrinter(writer http.ResponseWriter, request *http.Request) {
 
 func Print(writer http.ResponseWriter, request *http.Request) {
 
+	if request.Method != "POST" {
+		handelErr(errors.New("不支持的方法：" + request.Method), writer)
+		return
+	}
+
 	// 获取body
 	reqBody, err :=ioutil.ReadAll(request.Body)
 	if err != nil {
@@ -129,6 +139,11 @@ func Print(writer http.ResponseWriter, request *http.Request) {
 }
 
 func Job(writer http.ResponseWriter, request *http.Request) {
+
+	if request.Method != "GET" {
+		handelErr(errors.New("不支持的方法：" + request.Method), writer)
+		return
+	}
 
 	// 获取参数
 	request.ParseForm()
@@ -164,6 +179,11 @@ func Job(writer http.ResponseWriter, request *http.Request) {
 }
 
 func JobList(writer http.ResponseWriter, request *http.Request) {
+
+	if request.Method != "GET" {
+		handelErr(errors.New("不支持的方法：" + request.Method), writer)
+		return
+	}
 
 	// 获取参数
 	request.ParseForm()
