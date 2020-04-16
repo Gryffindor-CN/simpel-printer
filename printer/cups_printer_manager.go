@@ -411,7 +411,10 @@ func exeCommand(command string) (*string, error) {
 	//cmd := exec.Command("/bin/bash", "-c", "ssh root@192.168.206.115 '" + command + "'")
 	cmd := exec.Command("/bin/bash", "-c", command)
 	if output, err = cmd.CombinedOutput(); err != nil {
-		return nil, errors.New("执行命令失败")
+		if output != nil {
+			return nil, errors.New("执行命令失败：" + string(output))
+		}
+		return nil, errors.New("执行命令失败：")
 	}
 
 	// 解析返回结果
