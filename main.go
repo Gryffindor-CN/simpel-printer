@@ -33,7 +33,7 @@ func startServer() {
 	http.HandleFunc("/printer/print", service.Print)
 	http.HandleFunc("/printer/job", service.Job)
 	http.HandleFunc("/printer/job/list", service.JobList)
-	http.HandleFunc("/device/logs", service.GetLogs)
+	http.HandleFunc("/devices/logs", service.GetLogs)
 	http.ListenAndServe(":8888", nil)
 }
 
