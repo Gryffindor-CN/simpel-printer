@@ -68,12 +68,47 @@ func AddPrinter(writer http.ResponseWriter, request *http.Request) {
 	handelResp(nil, writer)
 }
 
+func DeletePrinter(writer http.ResponseWriter, request *http.Request) {
+
+	if request.Method != "GET" {
+		handelErr(errors.New("不支持的方法：" + request.Method), writer)
+		return
+	}
+
+	// 获取参数
+	request.ParseForm()
+	form := request.Form
+	var name *string
+	for key, value := range form {
+		if key == "name" {
+			name = new(string)
+			*name= value[0]
+		}
+	}
+	if name == nil{
+		handelErr(errors.New("缺少参数：name"), writer)
+		return
+	}
+
+	// 获取打印机列表
+	var cups printer.Manager = new (printer.CupsManager)
+	cups.Delete(name)
+	
+	// response
+	handelResp(nil, writer)
+}
+
 type PrinterReq struct {
 	Printer string `json:"printer"`
 	Device string `json:"device"`
 }
 
 func ListPrinter(writer http.ResponseWriter, request *http.Request) {
+
+	if request.Method != "GET" {
+		handelErr(errors.New("不支持的方法：" + request.Method), writer)
+		return
+	}
 
 	// 获取参数
 	request.ParseForm()
@@ -104,6 +139,11 @@ func ListPrinter(writer http.ResponseWriter, request *http.Request) {
 
 func Print(writer http.ResponseWriter, request *http.Request) {
 
+	if request.Method != "POST" {
+		handelErr(errors.New("不支持的方法：" + request.Method), writer)
+		return
+	}
+
 	// 获取body
 	reqBody, err :=ioutil.ReadAll(request.Body)
 	if err != nil {
@@ -130,6 +170,11 @@ func Print(writer http.ResponseWriter, request *http.Request) {
 }
 
 func Job(writer http.ResponseWriter, request *http.Request) {
+
+	if request.Method != "GET" {
+		handelErr(errors.New("不支持的方法：" + request.Method), writer)
+		return
+	}
 
 	// 获取参数
 	request.ParseForm()
@@ -165,6 +210,11 @@ func Job(writer http.ResponseWriter, request *http.Request) {
 }
 
 func JobList(writer http.ResponseWriter, request *http.Request) {
+
+	if request.Method != "GET" {
+		handelErr(errors.New("不支持的方法：" + request.Method), writer)
+		return
+	}
 
 	// 获取参数
 	request.ParseForm()

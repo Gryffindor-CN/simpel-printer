@@ -188,6 +188,11 @@ func (cupsManager CupsManager) JobList(printer *string, status *string) (*JobInf
 	return &jobList, nil
 }
 
+func (cupsManager CupsManager) Delete(name *string)  {
+	command := "lpadmin -x " + *name
+	exeCommand(command)
+}
+
 /**
  * 获取已连接的打印机列表
  */
@@ -207,7 +212,12 @@ func addedList() (*List, error)  {
 	resultArr := strings.Split(*results, "\n")
 	// 遍历打印机列表
 	for i:= 0;i<len(resultArr);i++{
-		if resultArr[i] == "" || resultArr[i] == "\t未知原因" || resultArr[i] == "\tPaused" || resultArr[i] == "\tWaiting for printer to become available." {
+		if resultArr[i] == "" || strings.HasPrefix(resultArr[i], "\t") {
+			//  忽略\t开头的行：
+			//    \t未知原因
+			//    \tPaused
+			//    \tWaiting for printer to become available.
+			//    \t无法向打印机发送数据。
 			continue
 		}
 		var printer Printer
@@ -309,7 +319,7 @@ func notAddedList() (*List, error)  {
  * 获取用usb端口连接的打印机
  */
 func getUsbPrinter() (*string, error) {
-	results, err := exeCommand("lpinfo -v")
+	results, err := exeCommand("lpinfo --timeout 1 -v")
 	if err != nil {
 		return nil, err
 	}

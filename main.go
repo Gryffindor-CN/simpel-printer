@@ -34,19 +34,13 @@ func startServer() {
 	http.HandleFunc("/printer/job", service.Job)
 	http.HandleFunc("/printer/job/list", service.JobList)
 	http.HandleFunc("/devices/logs", service.GetLogs)
+	http.HandleFunc("/printer/delete", service.DeletePrinter)
 	http.ListenAndServe(":8888", nil)
 }
 
 func main() {
-	// 日志
-	//common.Log.WithFields(logrus.Fields{
-	//	"animal": "monkey",
-	//	"size": 10,
-	//}).Error("A group of walrus emerges from the ocean")
-	//common.Log.Info("info test.")
-
-	//var bootStrap service.Bootstrap = new (service.LanCable)
-	//bootStrap.Start()
+	var bootStrap service.Bootstrap = new (service.LanCable)
+	bootStrap.Start()
 	startServer()
 }
 
