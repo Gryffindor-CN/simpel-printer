@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
 )
 
@@ -246,6 +247,75 @@ func JobList(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	handelResp(jobList, writer)
+}
+
+type Logs struct {
+	Logs []string `json:"logs"`
+}
+
+/**
+ * @api {GET} /device/logs 获得日志行
+ * @apiGroup device
+ * @apiName get device
+ * @apiDescription 获得日志行
+ *
+ * @apiParam {String} page 页码
+ * @apiParam {String} size 每页行数
+ *
+ * @apiParamExample 请求示例
+ * GET:/device/logs?page=1&size=100
+ *
+ * @apiSuccess {String} code 返回码
+ * @apiSuccess {String} message 返回消息
+ * @apiSuccess {Object} result 返回结果
+ *
+ * @apiSuccessExample 正确时的返回JSON数据包如下
+ * {
+ *     "code": "0",
+ *     "message": "OK",
+ *     "result": null
+ * }
+ *
+ * @apiError printer.99 测试错误
+ * @apiErrorExample 错误时的返回JSON数据包如下（示例为缺少参数）
+ * {
+ *     "code": "printer.99",
+ *     "message": "测试错误"
+ * }
+ */
+func GetLogs(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != "GET" {
+		handelErr(errors.New("HTTP 请求方法不支持。建议查看对应接口的 API 调用方式文档。"), writer)
+	}
+
+	var output []string
+	var err error
+	if output, err = checkParams(request); err != nil {
+		handelErr(err, writer)
+	}
+	logs := Logs{Logs:output}
+	handelResp(&logs, writer)
+}
+
+func checkParams(request *http.Request) (logs []string, err error) {
+	queryForm, err := url.ParseQuery(request.URL.RawQuery)
+	if err !=nil || len(queryForm) != 2 {
+		return nil, errors.New("必填参数没有填，请检查调用时是否填写了此参数，并重试请求。")
+	}
+
+	var page, pageExisted = queryForm["page"]
+	var size, sizeExisted = queryForm["size"]
+	pageInt, pageErr := strconv.Atoi(page[0])
+	sizeInt, sizeErr := strconv.Atoi(size[0])
+	if !pageExisted || ! sizeExisted || pageErr != nil || sizeErr != nil {
+		return nil, errors.New("参数值校验不通过。请使用请求参数构造规范化的请求字符串。")
+	}
+
+	output, err := printLog(pageInt, sizeInt)
+	if err != nil {
+		return nil, err
+	}
+	return output, nil
 }
 
 func handelErr(err error, writer http.ResponseWriter)  {

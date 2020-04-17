@@ -5,6 +5,7 @@ import (
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
+	"os"
 	"runtime"
 	"strings"
 	"time"
@@ -25,11 +26,11 @@ func InitLog() {
 
 	// 设置将日志输出到标准输出（黑夜的输出为stderr，标准错误）
 	// 日志消息输出可以是做生意的 io.writer 类型
-	//file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	//if err != nil {
-	//	//TODO 异常处理
-	//}
-	//Log.SetOutput(file)
+	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		//TODO 异常处理
+	}
+	Log.SetOutput(file)
 
 	// 设置日志级别为 warn 以上
 	Log.SetLevel(logrus.InfoLevel)

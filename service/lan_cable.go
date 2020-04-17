@@ -3,11 +3,14 @@ package service
 import (
 	"../common"
 	_net "../net"
+	"bufio"
 	"encoding/json"
 	"github.com/sirupsen/logrus"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -83,4 +86,31 @@ func registerDevice(serial string, endpoint string) {
 		default:
 			common.Log.WithFields(logrus.Fields{"message": response.Message}).Error("[x] 设备服务接入失败")
 	}
+}
+
+func printLog(page, size int) (logs []string, err error) {
+	var(
+		cmd *exec.Cmd
+		outputs []string
+	)
+	start := (page - 1) * size + 1
+	end := page * size
+	script := "awk 'NR>=" + strconv.Itoa(start) + " && NR <=" + strconv.Itoa(end) + "' ./simple-printer.log"
+	cmd = exec.Command("/bin/bash", "-c", script)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	cmd.Start()
+	reader := bufio.NewReader(stdout)
+	for {
+		line, err2 := reader.ReadString('\n')
+		if err2 != nil || io.EOF == err2 {
+			break
+		}
+		line = strings.Replace(line, "\n", "", -1)
+		outputs = append(outputs, line)
+	}
+	cmd.Wait()
+	return outputs, nil
 }
