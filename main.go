@@ -2,11 +2,9 @@ package main
 
 import (
 	"./service"
-	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"strings"
 )
 
 func ServeHttp(w http.ResponseWriter, r *http.Request) {
@@ -39,9 +37,5 @@ func startServer() {
 }
 
 func main() {
-	//startServer()
-	str := "\t未知原因"
-
-
-	fmt.Print(strings.HasPrefix(str,"\t"))
+	startServer()
 }
