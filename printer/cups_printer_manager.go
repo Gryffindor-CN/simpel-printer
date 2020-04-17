@@ -314,7 +314,7 @@ func notAddedList() (*List, error)  {
  * 获取用usb端口连接的打印机
  */
 func getUsbPrinter() (*string, error) {
-	results, err := exeCommand("lpinfo -v")
+	results, err := exeCommand("lpinfo --timeout 1 -v")
 	if err != nil {
 		return nil, err
 	}
