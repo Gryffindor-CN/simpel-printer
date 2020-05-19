@@ -12,10 +12,11 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const(
-	AGENT_PATH string = "./portway_arm"
+	AGENT_PATH string = "/usr/local/print/portway_arm"
 	DEVICE_SERVER_ENDPOINT string = "http://iot-device.dev.iotube.net/devices"
 )
 
@@ -36,10 +37,29 @@ func (lanCable *LanCable) Start() string {
 	proxy = _net.NewPortwayProxy(serial, AGENT_PATH)
 	endpoint := proxy.Register()
 
+	//校验是否注册成功
+	var i int = 1
+	for {
+		common.Log.WithFields(logrus.Fields{"次数": i}).Info("检查是否注册成功")
+		i++
+		time.Sleep(time.Duration(5)*time.Second)
+		if checkOnline("http://" + endpoint) {
+			common.Log.Info("注册成功")
+			break
+		}
+		killAgent(getAgentPid())
+		time.Sleep(time.Duration(5)*time.Second)
+		common.Log.Info("重新注册设备")
+		endpoint = proxy.Register()
+	}
+
+
 	//TODO 向设备服务发送接入信息
 	registerDevice(serial, "http://" + endpoint)
 	return ""
 }
+
+
 
 // 获得机器码
 func getSerial() string {
@@ -49,7 +69,7 @@ func getSerial() string {
 		err    error
 		str    string
 	)
-	cmd = exec.Command("/bin/bash", "-c", "cat /sys/class/net/eth0/address")
+	cmd = exec.Command("/bin/bash", "-c", "cat /sys/class/net/enxb827ebc976a0/address")
 	if output, err = cmd.CombinedOutput(); err != nil {
 		panic(err)
 	}
@@ -113,4 +133,43 @@ func printLog(page, size int) (logs []string, err error) {
 	}
 	cmd.Wait()
 	return outputs, nil
+}
+
+
+
+func killAgent(pid string)  {
+
+	//cmd := exec.Command("/bin/bash", "-c", "ssh root@192.168.206.115 '" + command + "'")
+	cmd := exec.Command("/bin/bash", "-c", "kill -9 " + pid)
+	cmd.CombinedOutput()
+}
+
+func getAgentPid() string {
+	// 执行命令
+	var (
+		output []byte
+		err error
+	)
+	//cmd := exec.Command("/bin/bash", "-c", "ssh root@192.168.206.115 '" + command + "'")
+	cmd := exec.Command("/bin/bash", "-c", "ps -ef|grep agent|grep -v grep")
+	if output, err = cmd.CombinedOutput(); err != nil {
+
+	}
+
+	// 解析返回结果
+	arr := strings.Fields(string(output))
+	return arr[1]
+}
+
+func checkOnline(endpoint string) bool {
+
+	resp, err := http.Get(endpoint+"/ping")
+	if err != nil {
+		return false
+	}
+
+	if resp.StatusCode == 460 {
+		return false
+	}
+	return true
 }
