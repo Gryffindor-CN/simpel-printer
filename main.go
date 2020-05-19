@@ -40,7 +40,7 @@ func startServer() {
 
 func main() {
 	var bootStrap service.Bootstrap = new (service.LanCable)
-	bootStrap.Start()
+	go bootStrap.Start()
 	startServer()
 }
 
